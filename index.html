@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Los Santos ID Generator</title>
+    <meta name="description" content="Generate your own GTA V style character card">
+    <link rel="stylesheet" href="style.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <!-- GSAP for animations -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div id="brush-cursor" style="display: none; position: fixed; border: 2px solid white; border-radius: 50%; pointer-events: none; transform: translate(-50%, -50%); z-index: 1000; box-shadow: 0 0 5px rgba(0,0,0,0.5); background: rgba(255,255,255,0.2);"></div>
+    
+    <div id="processing-loader" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); z-index: 9999; justify-content: center; align-items: center; flex-direction: column; color: white;">
+        <i class="fa-solid fa-circle-notch fa-spin fa-3x" style="color: var(--primary); margin-bottom: 1rem;"></i>
+        <span style="font-family: var(--font-title); font-size: 2.5rem; letter-spacing: 3px; text-shadow: 2px 2px 0 #000;">Processing...</span>
+    </div>
+
+    <!-- Loading Screen -->
+    <div id="loading-screen">
+        <div class="loader-content">
+            <h1 class="gta-title text-glow">LOADING...</h1>
+            <div class="progress-bar">
+                <div class="progress-fill"></div>
+            </div>
+            <div class="loading-tips" id="loading-tip">Tip: Don't forget to pack heat.</div>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <main class="app-container" style="display: none;">
+        <header class="app-header">
+            <h1 class="gta-title text-glow" style="margin-bottom: 0;">VINEWOOD</h1>
+            <p class="subtitle" style="font-family: var(--font-body); letter-spacing: 3px; color: var(--accent); text-transform: uppercase; font-weight: bold; text-shadow: 1px 1px 0 #000;">Character Card Generator</p>
+        </header>
+
+        <div class="app-layout">
+            <div class="preview-section">
+                <div class="canvas-container">
+                    <canvas id="main-canvas" width="1080" height="1350"></canvas>
+                    <div id="canvas-overlay" class="overlay-hint">
+                        <i class="fa-solid fa-camera"></i>
+                        <p>Upload a photo to begin</p>
+                    </div>
+                </div>
+                
+                <div class="masking-controls glass-panel" id="masking-controls" style="display: none; width: 100%; max-width: 500px;">
+                    <h4 style="margin-bottom: 1rem; color: var(--primary); font-family: var(--font-body); text-transform: uppercase;"><i class="fa-solid fa-eraser"></i> Eraser Tool (Manual Masking)</h4>
+                    <p style="font-size: 0.85rem; color: #ccc; margin-bottom: 1rem;">Drag on the canvas to erase the background from your photo.</p>
+                    <div class="control-row" style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                        <label style="flex-shrink: 0; font-weight: bold; color: white;">Brush Size</label>
+                        <input type="range" id="brush-size" min="10" max="150" value="40" style="flex: 1;">
+                    </div>
+                    <button id="btn-reset-mask" class="btn-secondary" style="width: 100%; padding: 0.8rem;"><i class="fa-solid fa-rotate-left"></i> Reset Image</button>
+                </div>
+            </div>
+
+            <div class="controls-section glass-panel">
+                <div class="control-group">
+                    <label><i class="fa-solid fa-1"></i> Photo Upload</label>
+                    <label class="btn-primary file-upload-btn">
+                        <i class="fa-solid fa-upload"></i> Choose Selfie
+                        <input type="file" id="image-upload" accept="image/*" hidden>
+                    </label>
+                </div>
+
+                <div class="control-group" style="margin-top: 1rem;">
+                    <label><i class="fa-solid fa-magic"></i> Auto Background Removal</label>
+                    <label style="display: flex; align-items: center; gap: 0.5rem; color: #ddd; cursor: pointer;">
+                        <input type="checkbox" id="auto-bg-remove" checked style="width: 20px; height: 20px; accent-color: var(--primary);">
+                        Enable AI Auto-Cutout (Free & Private)
+                    </label>
+                    <small style="color: #aaa; font-size: 0.8rem;">Runs 100% in your browser. First time takes ~10-15s to load AI model.</small>
+                </div>
+
+                <div class="control-group stats-group" style="margin-top: 1rem;">
+                    <label><i class="fa-solid fa-2"></i> Character Stats</label>
+                    <div class="stat-input">
+                        <span>Name</span>
+                        <input type="text" id="char-name" value="PLAYER ONE" maxlength="15">
+                    </div>
+                    <div class="stat-input">
+                        <span>Wanted Level</span>
+                        <input type="range" id="wanted-level" min="0" max="5" value="5">
+                    </div>
+                    <div class="stat-input">
+                        <span>Weapon</span>
+                        <select id="char-weapon">
+                            <option value="FISTS">Fists</option>
+                            <option value="PISTOL">Heavy Pistol</option>
+                            <option value="ASSAULT RIFLE">Assault Rifle</option>
+                            <option value="SNIPER">Sniper Rifle</option>
+                            <option value="RPG">RPG</option>
+                        </select>
+                    </div>
+                    <div class="stat-input">
+                        <span>Cash</span>
+                        <input type="text" id="char-cash" value="$1,500,000">
+                    </div>
+                </div>
+
+                <div class="action-buttons" style="margin-top: 1.5rem;">
+                    <button id="btn-download" class="btn-success" disabled>
+                        <i class="fa-solid fa-download"></i> Save PNG Card
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>
